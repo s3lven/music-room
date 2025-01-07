@@ -2,6 +2,9 @@ import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
 import { socketConfig } from "./config/socket";
+import { databaseConfig } from "./config/database";
+import roomRouter from "./routes/roomRoute";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -23,9 +26,21 @@ const io = new Server(expressServer, {
 
 // Set configurations
 socketConfig(io);
+databaseConfig(process.env.MONGODB_URI);
+
+mongoose.connection.on("connected", () => {
+  console.log("Connected to the database");
+});
+
+mongoose.connection.on("disconencted", () => {
+  console.log("Disconnected from the database");
+});
 
 // Middlewares
 app.use(express.json());
+
+// Routes
+app.use("/api/v1/rooms", roomRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello World" });
