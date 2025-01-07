@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent} from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Button } from "./ui/button";
+import { socket } from "@/utils/socket";
 
 const HomeForm = () => {
   const [username, setUsername] = useState("");
@@ -21,17 +22,26 @@ const HomeForm = () => {
       if (action === "create") {
         // Generate a random room ID
         const newRoomId = Math.random().toString(36).substring(7);
+        enterRoom(newRoomId);
         router.push(
           `/room/${newRoomId}?username=${encodeURIComponent(username)}`
         );
       } else {
         if (roomId) {
+          enterRoom(roomId);
           router.push(
             `/room/${roomId}?username=${encodeURIComponent(username)}`
           );
         }
       }
     }
+  };
+
+  const enterRoom = (roomId: string) => {
+    socket.emit("enterRoom", {
+      username,
+      roomId,
+    });
   };
 
   return (
@@ -77,7 +87,11 @@ const HomeForm = () => {
               />
             </div>
           )}
-          <Button type="submit" className="w-full font-bold" variant={"secondary"}>
+          <Button
+            type="submit"
+            className="w-full font-bold"
+            variant={"secondary"}
+          >
             {action === "create" ? "Create Room" : "Join Room"}
           </Button>
         </form>

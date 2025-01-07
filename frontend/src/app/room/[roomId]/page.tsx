@@ -3,8 +3,9 @@
 import MessageInput from "@/components/chat/message-input";
 import MessageList from "@/components/chat/message-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Message } from "@/types";
 import { socket } from "@/utils/socket";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -15,7 +16,7 @@ const RoomPage = ({ params }: { params: { id: string } }) => {
   const username = searchParams.get("username");
 
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     const onConnect = () => {
@@ -26,7 +27,7 @@ const RoomPage = ({ params }: { params: { id: string } }) => {
       setIsConnected(false);
     };
 
-    const onMessageEvent = (message: string) => {
+    const onMessageEvent = (message: Message) => {
       setMessages((prev) => [...prev, message]);
     };
 
@@ -41,8 +42,20 @@ const RoomPage = ({ params }: { params: { id: string } }) => {
     };
   }, []);
 
+  if (!username) {
+    console.error("There is no username!");
+    return;
+  }
+
   const sendMessage = (content: string) => {
-    socket.emit("message", content);
+    // Construct message object
+    const message: Message = {
+      roomId: params.id,
+      username,
+      content,
+    };
+
+    socket.emit("message", message);
   };
 
   return (
@@ -55,7 +68,7 @@ const RoomPage = ({ params }: { params: { id: string } }) => {
       <CardContent className="p-0">
         {/* Messages List */}
         <ScrollArea className="h-[400px] p-4">
-          <MessageList messages={messages} />
+          <MessageList messages={messages} currentUser={username} />
         </ScrollArea>
         {/* Message Input */}
         <MessageInput onSendMessage={sendMessage} />
