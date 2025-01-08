@@ -5,6 +5,7 @@ import { socketConfig } from "./config/socket";
 import { databaseConfig } from "./config/database";
 import roomRouter from "./routes/roomRoute";
 import mongoose from "mongoose";
+import cors from "cors";
 
 dotenv.config();
 
@@ -19,7 +20,9 @@ const expressServer = app.listen(port, () => {
 const io = new Server(expressServer, {
   cors: {
     origin:
-      process.env.NODE_ENV === "production" ? false : ["http://localhost:3001"],
+      process.env.NODE_ENV === "production"
+        ? false
+        : ["http://localhost:3001", "http://172.26.40.212:3001"],
     methods: ["GET", "POST"],
   },
 });
@@ -38,6 +41,12 @@ mongoose.connection.on("disconencted", () => {
 
 // Middlewares
 app.use(express.json());
+app.use(
+  cors({
+    origin: ["http://localhost:3001", "http://172.26.40.212:3001"],
+    methods: ["GET", "POST"],
+  }),
+);
 
 // Routes
 app.use("/api/v1/rooms", roomRouter);

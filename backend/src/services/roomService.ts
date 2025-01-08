@@ -16,12 +16,7 @@ export const createRoom = async ({
   const room = await Room.create({
     name,
     createdBy,
-    activeUsers: [
-      {
-        username: createdBy,
-        joinedAt: new Date(),
-      },
-    ],
+    activeUsers: [],
   });
 
   return room;

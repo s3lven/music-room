@@ -6,38 +6,67 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Message } from "@/types";
 import { socket } from "@/utils/socket";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 import React from "react";
 
-const RoomPage = ({ params }: { params: { id: string } }) => {
-  const searchParams = useSearchParams();
-  const username = searchParams.get("username");
+const RoomPage = ({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ roomId: string }>;
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) => {
+  const { username } = use(searchParams);
+  const { roomId } = use(params);
 
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [, setIsConnected] = useState(socket.connected);
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
+    // Handle room leave
+    const leaveRoom = () => {
+      if (socket.connected) {
+        socket.emit("room:leave", {
+          username,
+          roomId,
+        });
+      }
+    };
+
     const onConnect = () => {
       setIsConnected(true);
+      socket.emit("room:join", {
+        username,
+        roomId,
+      });
     };
 
     const onDisconnect = () => {
       setIsConnected(false);
-    };
-
-    const onMessageEvent = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
+      console.log("I am disconnecting");
     };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("message", onMessageEvent);
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
+
+      // Leave the room when component unmounts
+      leaveRoom();
+    };
+  }, [params, roomId, username]);
+
+  useEffect(() => {
+    const onMessageEvent = (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+
+    socket.on("message", onMessageEvent);
+
+    return () => {
       socket.off("message", onMessageEvent);
     };
   }, []);
@@ -50,7 +79,6 @@ const RoomPage = ({ params }: { params: { id: string } }) => {
   const sendMessage = (content: string) => {
     // Construct message object
     const message: Message = {
-      roomId: params.id,
       username,
       content,
     };

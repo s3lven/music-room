@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Button } from "./ui/button";
-import { socket } from "@/utils/socket";
+import { createNewRoom } from "@/utils/api";
 
 const HomeForm = () => {
   const [username, setUsername] = useState("");
@@ -15,33 +15,25 @@ const HomeForm = () => {
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (username) {
       if (action === "create") {
         // Generate a random room ID
-        const newRoomId = Math.random().toString(36).substring(7);
-        enterRoom(newRoomId);
+        const newRoom = await createNewRoom({username})
+        const newRoomId = newRoom._id
         router.push(
           `/room/${newRoomId}?username=${encodeURIComponent(username)}`
         );
       } else {
         if (roomId) {
-          enterRoom(roomId);
           router.push(
             `/room/${roomId}?username=${encodeURIComponent(username)}`
           );
         }
       }
     }
-  };
-
-  const enterRoom = (roomId: string) => {
-    socket.emit("enterRoom", {
-      username,
-      roomId,
-    });
   };
 
   return (

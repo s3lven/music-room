@@ -1,16 +1,5 @@
 import mongoose from "mongoose";
 
-const activeUserSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-  },
-  joinedAt: {
-    type: Date,
-    required: true,
-  },
-});
-
 const roomSchema = new mongoose.Schema(
   {
     name: {
@@ -25,8 +14,9 @@ const roomSchema = new mongoose.Schema(
     },
     activeUsers: [
       {
-        type: activeUserSchema,
-        required: true,
+        username: String,
+        joinedAt: Date,
+        socketId: String,
       },
     ],
   },
