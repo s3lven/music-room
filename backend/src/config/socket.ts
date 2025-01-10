@@ -2,14 +2,16 @@ import { Server, Socket } from "socket.io";
 import { registerChatEvents } from "../events/chatEvents";
 
 import Room from "../models/room";
-import { cleanupEmptyRoom } from "../util/cleanupEmptyRoom";
 
 export const socketConfig = (io: Server) => {
-  io.on("connection", (socket: Socket) => {
-    console.log(`User ${socket.id} connected`);
+  io.on("connection", async (socket: Socket) => {
+    const allSockets = await io.fetchSockets();
+    console.log("Total connections", allSockets.length);
+    console.log(`New connection detected: ${socket.id}`);
 
     registerChatEvents(io, socket);
 
+    // Handle disconnect -- page reload and back navigation
     socket.on("disconnect", async () => {
       console.log(`User ${socket.data.username} disconnected`);
 
@@ -27,20 +29,16 @@ export const socketConfig = (io: Server) => {
               $pull: {
                 activeUsers: { username: socket.data.username },
               },
-            }
+            },
           );
 
           socket.leave(room._id.toString());
 
           // Notify others in room
-          io.to(room._id.toString()).emit("room:user_left", {
-            username: socket.data.username,
+          io.to(room._id.toString()).emit("message", {
+            username: "ADMIN",
+            content: `${socket.data.username} has disconnected from the room.`,
           });
-
-          // if (room.activeUsers.length === 0) {
-          //   console.log(`Empty room detected:`, room.id);
-          //   await cleanupEmptyRoom(room.id);
-          // }
         }
       } catch (error) {
         console.error("Error handling disconnect", error);

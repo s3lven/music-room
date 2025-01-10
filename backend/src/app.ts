@@ -6,13 +6,14 @@ import { databaseConfig } from "./config/database";
 import roomRouter from "./routes/roomRoute";
 import mongoose from "mongoose";
 import cors from "cors";
+import { cleanupEmptyRooms } from "./util/cleanupEmptyRooms";
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Create an Express server to be shared with the same port as Socker.io
+// Create an Express server to be shared with the same port as Socket.io
 const expressServer = app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
@@ -35,7 +36,7 @@ mongoose.connection.on("connected", () => {
   console.log("Connected to the database");
 });
 
-mongoose.connection.on("disconencted", () => {
+mongoose.connection.on("disconnected", () => {
   console.log("Disconnected from the database");
 });
 
@@ -47,6 +48,9 @@ app.use(
     methods: ["GET", "POST"],
   }),
 );
+
+// Cleans up empty rooms in database every 5 minutes
+setInterval(cleanupEmptyRooms, 5 * 60000);
 
 // Routes
 app.use("/api/v1/rooms", roomRouter);

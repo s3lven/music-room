@@ -10,11 +10,21 @@ type BuiltMessage = UserMessage & { createdAt: Date };
 
 export const registerChatEvents = (io: Server, socket: Socket) => {
   // Handle new messages
-  socket.on("message", ({ username, content }: UserMessage) => {
+  socket.on("message", async ({ username, content }: UserMessage) => {
     console.log(`${username}: ${content}`);
 
     try {
       if (!content.trim()) return;
+
+      // Find the user's room
+      const room = await Room.findOne({
+        "activeUsers.username": username,
+      }).select("_id");
+
+      if (!room) {
+        console.error(`No room found for user ${username}`);
+        return;
+      }
 
       const message: BuiltMessage = {
         content,
@@ -22,7 +32,7 @@ export const registerChatEvents = (io: Server, socket: Socket) => {
         createdAt: new Date(),
       };
 
-      io.emit("message", message);
+      io.to(room._id.toString()).emit("message", message);
     } catch (error) {
       socket.emit("error", "Failed to send message");
     }
@@ -53,15 +63,19 @@ export const registerChatEvents = (io: Server, socket: Socket) => {
         await room.save();
       }
 
+      socket.join(roomId);
+      console.log("Rooms:", socket.rooms);
+
       // Tell user they have joined a new room
       socket.emit("message", {
         username: "ADMIN",
-        content: `${username} has joined the room.`,
+        content: `Welcome to the chat room, ${socket.data.username}!`,
       });
 
-      // TODO: Notify others about new user
-      socket.to(roomId).emit("room:user_joined", {
-        username,
+      // Notify others about new user
+      socket.broadcast.to(roomId).emit("message", {
+        username: "ADMIN",
+        content: `${socket.data.username} has joined the room.`,
       });
 
       // TODO: Update any lists for user and others
@@ -71,6 +85,7 @@ export const registerChatEvents = (io: Server, socket: Socket) => {
     }
   });
 
+  // Handle leave
   socket.on("room:leave", async ({ roomId }) => {
     console.log(`User ${socket.data.username} is leaving room ${roomId}`);
 
@@ -86,7 +101,7 @@ export const registerChatEvents = (io: Server, socket: Socket) => {
           $pull: {
             activeUsers: { username: socket.data.username },
           },
-        }
+        },
       );
       await room.save();
 
@@ -94,14 +109,10 @@ export const registerChatEvents = (io: Server, socket: Socket) => {
       socket.leave(roomId);
 
       // Notify others
-      socket.to(roomId).emit("room:user_left", {
-        username: socket.data.username,
+      socket.to(roomId).emit("message", {
+        username: "ADMIN",
+        content: `User ${socket.data.username} has left the room.`,
       });
-
-      // Check if room is now empty
-      // if (room.activeUsers.length === 0) {
-      //   await cleanupEmptyRoom(roomId);
-      // }
     } catch (error) {
       socket.emit("error", "Failed to leave room");
     }

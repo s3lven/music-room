@@ -23,28 +23,30 @@ const RoomPage = ({
   const [, setIsConnected] = useState(socket.connected);
   const [messages, setMessages] = useState<Message[]>([]);
 
+  // Handles connect, disconnect, and logging
   useEffect(() => {
-    // Handle room leave
-    const leaveRoom = () => {
-      if (socket.connected) {
-        socket.emit("room:leave", {
-          username,
-          roomId,
-        });
-      }
-    };
+    socket.connect()
 
+    // Print received events on console
+    socket.onAny((event, ...args) => {
+      console.log(event, args)
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
+
+
+  useEffect(() => {
     const onConnect = () => {
       setIsConnected(true);
-      socket.emit("room:join", {
-        username,
-        roomId,
-      });
+      socket.emit("room:join", {username, roomId});
     };
 
     const onDisconnect = () => {
       setIsConnected(false);
-      console.log("I am disconnecting");
+      socket.emit("room:leave", {roomId})
     };
 
     socket.on("connect", onConnect);
@@ -53,12 +55,11 @@ const RoomPage = ({
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-
-      // Leave the room when component unmounts
-      leaveRoom();
     };
-  }, [params, roomId, username]);
+  }, [roomId, username]);
+  
 
+  // Handles message events
   useEffect(() => {
     const onMessageEvent = (message: Message) => {
       setMessages((prev) => [...prev, message]);
