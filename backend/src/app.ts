@@ -11,7 +11,7 @@ import { cleanupEmptyRooms } from "./util/cleanupEmptyRooms";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // Create an Express server to be shared with the same port as Socket.io
 const expressServer = app.listen(port, () => {
@@ -22,8 +22,8 @@ const io = new Server(expressServer, {
   cors: {
     origin:
       process.env.NODE_ENV === "production"
-        ? false
-        : ["http://localhost:3001", "http://172.26.40.212:3001"],
+        ? ["http://localhost:3001"]
+        : ["http://localhost:3001"],
     methods: ["GET", "POST"],
   },
 });
@@ -44,7 +44,7 @@ mongoose.connection.on("disconnected", () => {
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:3001", "http://172.26.40.212:3001"],
+    origin: ["http://localhost:3001"],
     methods: ["GET", "POST"],
   }),
 );
