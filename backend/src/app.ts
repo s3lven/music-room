@@ -47,7 +47,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3001",
-      "https://music-room-frontend.onrender.com/",
+      "https://music-room-frontend.onrender.com",
     ],
     methods: ["GET", "POST"],
   }),
