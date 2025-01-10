@@ -6,7 +6,7 @@ COPY backend/package*.json ./
 
 RUN npm install --silent --production
 
-COPY backend/ .
+COPY . .
 
 EXPOSE 5000
 
