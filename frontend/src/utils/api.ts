@@ -1,3 +1,8 @@
+const API_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.BACKEND_URL
+    : "http://localhost:5000/api/v1";
+
 export const createNewRoom = async ({ username }: { username: string }) => {
   try {
     const body = {
@@ -5,7 +10,7 @@ export const createNewRoom = async ({ username }: { username: string }) => {
       createdBy: username,
     };
 
-    const response = await fetch(`${process.env.BACKEND_URL}/rooms`, {
+    const response = await fetch(`${API_URL}/rooms`, {
       method: "POST",
       body: JSON.stringify(body),
       headers: {
