@@ -22,7 +22,7 @@ const expressServer = app.listen(port, () => {
 const io = new Server(expressServer, {
   cors: {
     origin: [
-      "https://music-room-frontend.onrender.com/",
+      "https://music-room-frontend.onrender.com",
       "http://localhost:3001",
     ],
     methods: ["GET", "POST"],
@@ -50,7 +50,7 @@ app.use(
       "https://music-room-frontend.onrender.com/",
     ],
     methods: ["GET", "POST"],
-  })
+  }),
 );
 
 // Cleans up empty rooms in database every 5 minutes
