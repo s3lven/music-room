@@ -15,15 +15,16 @@ const port = process.env.PORT || 5000;
 
 // Create an Express server to be shared with the same port as Socket.io
 const expressServer = app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  if (process.env.NODE_ENV === "production")
+    console.log(`Server running on http://localhost:${port}`);
 });
 
 const io = new Server(expressServer, {
   cors: {
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["http://localhost:3001"]
-        : ["http://localhost:3001"],
+    origin: [
+      "https://music-room-frontend.onrender.com/",
+      "http://localhost:3001",
+    ],
     methods: ["GET", "POST"],
   },
 });
@@ -44,9 +45,12 @@ mongoose.connection.on("disconnected", () => {
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:3001"],
+    origin: [
+      "http://localhost:3001",
+      "https://music-room-frontend.onrender.com/",
+    ],
     methods: ["GET", "POST"],
-  }),
+  })
 );
 
 // Cleans up empty rooms in database every 5 minutes
@@ -56,7 +60,7 @@ setInterval(cleanupEmptyRooms, 5 * 60000);
 app.use("/api/v1/rooms", roomRouter);
 
 app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Hello World" });
+  res.json({ message: "Welcome to Music Chat" });
 });
 
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
