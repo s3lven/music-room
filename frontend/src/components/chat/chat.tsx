@@ -1,0 +1,92 @@
+"use client"
+
+import React, { useEffect, useState } from "react";import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import MessageInput from "./message-input";
+import MessageList from "./message-list";
+import { socket } from "@/utils/socket";
+import { Message } from "@/types";
+import { ScrollArea } from "../ui/scroll-area";
+
+const Chat = ({ username, roomId }: { username: string; roomId: string }) => {
+  const [, setIsConnected] = useState(socket.connected);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+
+  // Handles connect, disconnect, and logging
+  useEffect(() => {
+    socket.connect();
+
+    // Print received events on console
+    socket.onAny((event, ...args) => {
+      console.log(event, args);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const onConnect = () => {
+      setIsConnected(true);
+      if (currentRoom !== roomId) {
+        setCurrentRoom(roomId);
+        socket.emit("room:join", { username, roomId });
+      }
+    };
+
+    const onDisconnect = () => {
+      setIsConnected(false);
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
+  }, [currentRoom, roomId, username]);
+
+  // Handles message events
+  useEffect(() => {
+    const onMessageEvent = (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+
+    socket.on("message", onMessageEvent);
+
+    return () => {
+      socket.off("message", onMessageEvent);
+    };
+  }, []);
+
+  const sendMessage = (content: string) => {
+    // Construct message object
+    const message: Message = {
+      username,
+      content,
+    };
+
+    socket.emit("message", message);
+  };
+  return (
+    <Card className="w-full max-w-2xl font-mali h-full">
+      <CardHeader className="bg-primary">
+        <CardTitle className="text-2xl font-bold text-primary-foreground">
+          Music Chat Room
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {/* Messages List */}
+        <ScrollArea className="h-[400px] p-4">
+          <MessageList messages={messages} currentUser={username} />
+        </ScrollArea>
+        {/* Message Input */}
+        <MessageInput onSendMessage={sendMessage} />
+      </CardContent>
+    </Card>
+  );
+};
+
+export default Chat;

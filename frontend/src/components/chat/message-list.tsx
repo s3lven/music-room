@@ -9,7 +9,7 @@ interface MessageListProps {
 
 const MessageList = ({ messages, currentUser }: MessageListProps) => {
   return (
-    <div className="space-y-4 overfloy-y-scroll">
+    <div className="space-y-4 overflow-y-scroll">
       {messages.map((message, index) => (
         <div
           key={index}
