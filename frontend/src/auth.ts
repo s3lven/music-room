@@ -1,7 +1,12 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import Spotify from "next-auth/providers/spotify";
 
-const scopes = ["playlist-read-private", "user-read-email"].join(",");
+const scopes = [
+  "playlist-read-private",
+  "user-read-email",
+  "streaming",
+  "user-read-private",
+].join(",");
 
 const params = {
   scope: scopes,
@@ -11,7 +16,7 @@ const SPOTIFY_AUTH_URL =
   "https://accounts.spotify.com/authorize?" +
   new URLSearchParams(params).toString();
 
-// Add accessToken to the session type 
+// Add accessToken to the session type
 declare module "next-auth" {
   interface Session extends DefaultSession {
     accessToken: string | unknown;

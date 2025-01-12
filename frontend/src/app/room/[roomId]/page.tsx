@@ -1,5 +1,7 @@
+import { auth } from "@/auth";
 import Chat from "@/components/chat/chat";
-import Playlists from "@/components/playlists";
+import Player from "@/components/player/player";
+// import Playlists from "@/components/playlists";
 
 import React from "react";
 
@@ -12,6 +14,12 @@ const RoomPage = async ({
 }) => {
   const { username } = await searchParams;
   const { roomId } = await params;
+  const session = await auth();
+
+  if (!session) {
+    console.error("User is not authenticated");
+    return null;
+  }
 
   if (!username) {
     console.error("There is no username!");
@@ -19,9 +27,10 @@ const RoomPage = async ({
   }
 
   return (
-    <div className=" h-full flex gap-4">
+    <div className="w-full h-full flex gap-4 mx-auto">
       <Chat roomId={roomId} username={username} />
-      <Playlists />
+      {/* <Playlists /> */}
+      <Player accessToken={session.accessToken} />
     </div>
   );
 };
